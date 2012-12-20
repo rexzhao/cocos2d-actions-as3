@@ -17,8 +17,6 @@ package
 		}
 
 		public function cocos2dMain() {
- 			addEventListener(Event.ENTER_FRAME, onEnterFrame);
-
 			var request:URLRequest = new URLRequest("dayan.swf");
 			var loader:Loader = new Loader();
 			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR,  onIOError);
@@ -75,10 +73,6 @@ package
 
 			node.stopAllActions();
 			node.runAction(new CCMoveTo(3, new CCPoint(dx, dy)));
-		}
-
-		private function onEnterFrame(event:Event) : void {
-			CCScheduler.sharedScheduler().tick();
 		}
 	}
 }

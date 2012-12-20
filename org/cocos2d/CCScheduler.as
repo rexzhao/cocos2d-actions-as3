@@ -4,6 +4,8 @@ package org.cocos2d
 
 	import org.cocos2d.*;
 
+	import mx.effects.Tween;
+
 	public class CCScheduler extends CCObject {
 		private var timeScale_:Number;
 
@@ -32,6 +34,8 @@ package org.cocos2d
 		//BOOL updateHashLocked; // If true unschedule will not remove anything from a hash. Elements will only be marked for deletion.
 		//private var updateHashLocked:Boolean;
 
+
+		private var tween:Tween;
 		public function CCScheduler() {
 			timeScale_ = 1.0;
 
@@ -53,6 +57,16 @@ package org.cocos2d
 			//currentTargetSalvaged = NO;
 			//hashForSelectors = nil;
 			//updateHashLocked = NO;
+
+			tween = new Tween(this, 0, 100, -1, -1, onTweenUpdate, onTweenEnd);
+		}
+
+		private function onTweenUpdate(v:Number) : void {
+			tick();
+		}
+
+		private function onTweenEnd(v:Number) : void {
+			tween = new Tween(this, 0, 100, 1000, -1, onTweenUpdate, onTweenEnd);
 		}
 
 		//@property (nonatomic,readwrite) ccTime	timeScale;
