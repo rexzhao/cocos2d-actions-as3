@@ -1,63 +1,65 @@
 package org.cocos2d
 {
 	import flash.display.Sprite;
-	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 
 	import flash.events.*;
-	//import flash.display.DisplayObject;
-	//import flash.display.DisplayObjectContainer;
 
 	import flash.geom.Matrix;
 	
 	public class CCSprite extends CCNode {
 		private var displayFrame_:CCSpriteFrame;
-		private var bitmap_:Bitmap;
-		private var displayFrameContainer_:Sprite;
 
-		public var _write_flip_log:Boolean;
+		public static var forceSmoothing:Boolean = false;
+
+		public var _smoothing:Boolean = false;
+
+		public function set smoothing(v:Boolean) : void {
+			if (v != _smoothing) {
+				_smoothing = v;
+				if (displayFrame &&
+						displayFrame_.texture &&
+						displayFrame_.texture.image) {
+					adjectImage();
+				}
+			}
+		}
+
+		public function get smoothing() : Boolean {
+			return _smoothing;
+		}
 
 		public function CCSprite(spriteFrame:CCSpriteFrame = null) {
 			displayFrame_ = null;
-			displayFrameContainer_= new Sprite;
-			addChild(displayFrameContainer_);
-
 			setDisplayFrame(spriteFrame);
 		}
 
-		public function removeAll() : void {
-			
-		};
-
 		public function get flipX() : Boolean {
-			return displayFrameContainer_.transform.matrix.a == -1;
+			return this.transform.matrix.a == -1;
 		}
 
 		public function set flipX(b:Boolean) : void {
-			if(_write_flip_log) {
-				WriteLog("set flipX " + b);
-			}
-			var matrix:Matrix = displayFrameContainer_.transform.matrix;
+			var matrix:Matrix = this.transform.matrix;
 			if (b) {
 				matrix.a = -1;//沿x = 0轴翻转
 			} else {
 				matrix.a = 1;
 			}
-			displayFrameContainer_.transform.matrix = matrix;
+			this.transform.matrix = matrix;
 		}
 
 		public function get flipY() : Boolean {
-			return displayFrameContainer_.transform.matrix.d == -1;
+			return this.transform.matrix.d == -1;
 		}
 
 		public function set flipY(b:Boolean) : void {
-			var matrix:Matrix = displayFrameContainer_.transform.matrix;
+			var matrix:Matrix = this.transform.matrix;
 			if (b) {
 				matrix.d = -1;//沿x = 0轴翻转
 			} else {
 				matrix.d = 1;
 			}
-			displayFrameContainer_.transform.matrix = matrix;
+			this.transform.matrix = matrix;
 		}
 
 		public function get displayFrame() : CCSpriteFrame {
@@ -69,39 +71,37 @@ package org.cocos2d
 		}
 
 		private function adjectImage() : void {
+			var image:BitmapData = displayFrame_.texture.image; 
+
 			var rect:CCRect = displayFrame_.rect;
+			if (rect == null) {
+				rect = new CCRect(0, 0, image.width, image.height);
+			}
+
 			var offset:CCPoint = displayFrame_.offset;
 			if (offset == null) {
 				offset = new CCPoint(0, 0);
 			}
 
-			if (rect != null) {
-				var originalSize:CCSize = displayFrame_.originalSize;
-				if (originalSize == null) {
-					originalSize = new CCSize(rect.width, rect.height);
-				}
-
-				var xx:CCPoint = new CCPoint(0,0);
-				xx.x = originalSize.width  / 2 - offset.x - rect.width  / 2;
-				xx.y = originalSize.height / 2 - offset.y - rect.height  / 2;
-
-				bitmap_.scrollRect = rect;
-
-				bitmap_.x = - rect.width / 2 - xx.x;
-				bitmap_.y = - rect.height / 2 - xx.y;
-			} else {
-				bitmap_.x = - bitmap_.width / 2;
-				bitmap_.y = - bitmap_.height / 2;
+			var originalSize:CCSize = displayFrame_.originalSize;
+			if (originalSize == null) {
+				originalSize = new CCSize(rect.width, rect.height);
 			}
+
+			var ptCent:CCPoint = new CCPoint(0, 0);
+			ptCent.x = rect.x - offset.x + originalSize.width / 2;
+			ptCent.y = rect.y - offset.y + originalSize.height / 2;
+
+			this.graphics.clear();
+
+			var matrix:Matrix = new Matrix(); 
+			matrix.translate(-ptCent.x, -ptCent.y);
+			this.graphics.beginBitmapFill(image, matrix, true, forceSmoothing ? true : _smoothing);
+			this.graphics.drawRect(-ptCent.x + rect.x, -ptCent.y + rect.y, rect.width, rect.height);
+			this.graphics.endFill();
 		}
 
 		public function setDisplayFrame(newFrame:CCSpriteFrame) : void {
-			//WriteLog("CCSprite::setDisplayFrame");
-			if (bitmap_ == null) {
-				bitmap_ = new Bitmap();
-				displayFrameContainer_.addChildAt(bitmap_, 0);
-			}
-
 			if (displayFrame_ && displayFrame_.texture) {
 				displayFrame_.texture.unRegisterCallback(onTextureLoaded);
 			}
@@ -109,8 +109,7 @@ package org.cocos2d
 			displayFrame_ = newFrame;
 
 			if (displayFrame_) {
-				bitmap_.bitmapData = displayFrame_.texture.image; 
-				if (bitmap_.bitmapData == null) {
+				if (displayFrame_.texture.image == null) {
 					displayFrame_.texture.RegisterCallback(onTextureLoaded);
 				} else {
 					adjectImage();
@@ -143,17 +142,16 @@ package org.cocos2d
 					displayFrameContainer_.y = 0;
 				}
 				*/
-				displayFrameContainer_.x = 0;
-				displayFrameContainer_.y = 0;
 			} else {
-				bitmap_.bitmapData = null;
+				this.graphics.clear();
 			}
 		}
 
 		private function onTextureLoaded(event:Event) : void {
 			displayFrame_.texture.unRegisterCallback(onTextureLoaded);
-			bitmap_.bitmapData = displayFrame_.texture.image; //drawInRect(displayFrame_.rect);
-			adjectImage();
+			if (displayFrame_.texture.image) {
+				adjectImage();
+			}
 		}
 
 		public function getDisplayFrame() : CCSpriteFrame {

@@ -62,7 +62,9 @@ package org.cocos2d
 		}
 
 		private function onTweenUpdate(v:Number) : void {
-			tick();
+			if (!_pause) {
+				tick();
+			}
 		}
 
 		private function onTweenEnd(v:Number) : void {
@@ -117,12 +119,14 @@ package org.cocos2d
 			return dt;
 		}
 
+		private var _pause:Boolean = false;
 		public function pause(p:Boolean) : void {
 			if (p) {
 				tick();
 			} else {
 				lastTime = new Date();
 			}
+			_pause = p;
 		}
 
 		public function tick(/*dt:Number*/) : void {
